@@ -6,18 +6,25 @@ from sol import dialog
 
 
 def test_from_parsed():
-    parsed = {'sayings': ['oi, bom dia', 'tchau!']}
-    d = dialog.Dialog.from_parsed(parsed)
+    parsed = [
+        ('say', 'oi, bom dia'),
+        ('say', 'tchau'),
+        ('ask', 'what?', 'var'),
 
-    assert len(d.actions) == 2
+    ]
+    d = dialog.Dialog.from_parsed(parsed)
+    assert len(d.actions) == 3
 
 
 def test_execute(mocker):
-    mocker.patch.object(dialog, 'print', Mock(spec=print))
+    mocker.patch.object(dialog.Say, '__call__', Mock(spec=dialog.Say.__call__))
 
-    parsed = {'sayings': ['oi, bom dia', 'tchau!']}
+    parsed = [
+        ('say', 'oi, bom dia'),
+        ('say', 'tchau'),
+
+    ]
     d = dialog.Dialog.from_parsed(parsed)
+    d.execute({})
 
-    d.execute()
-
-    assert len(dialog.print.call_args_list) == 2
+    assert len(dialog.Say.__call__.call_args_list) == 2

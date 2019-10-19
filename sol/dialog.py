@@ -2,9 +2,12 @@
 
 import random
 
+from .actions import Say, Ask
 
-def say(msg):
-    print(msg)
+actions = {
+    'say': Say,
+    'ask': Ask
+}
 
 
 class Dialog:
@@ -17,23 +20,18 @@ class Dialog:
 
     @classmethod
     def from_parsed(cls, parsed):
-        actions = []
-        for saying in parsed['sayings']:
-            actions.append(lambda: say(saying))
+        dialog_actions = []
+        for action_conf in parsed:
+            label = action_conf[0]
+            rest = action_conf[1:]
+            action_cls = actions[label]
+            dialog_actions.append(action_cls(*rest))
 
-        return cls(actions)
-
-    @property
-    def context(self):
-        return self._context
-
-    @context.setter
-    def context(self, context):
-        self._context = context
+        return cls(dialog_actions)
 
     def execute(self, context):
         for action in self.actions:
-            action()
+            context = action(context)
         return context
 
 
@@ -49,7 +47,7 @@ class Bollocks(Dialog):
         super().__init__([])
 
     def execute(self, context):
-        self.actions = [lambda: say(random.choice(self.sentences))]
+        self.actions = [Say(random.choice(self.sentences))]
         try:
             super().execute(context)
         finally:

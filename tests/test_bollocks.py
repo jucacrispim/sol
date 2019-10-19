@@ -6,8 +6,8 @@ from sol import dialog
 
 
 def test_execute(mocker):
-    mocker.patch.object(dialog, 'print', Mock(spec=print))
+    mocker.patch.object(dialog.Say, '__call__', Mock(spec=dialog.Say.__call__))
     bollocks = dialog.Bollocks()
     bollocks({})
 
-    assert dialog.print.called
+    assert dialog.Say.__call__.called

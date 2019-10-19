@@ -3,33 +3,80 @@
 # This module parses the contents of .slang files and returns
 # a dictionary with a dialog configuration
 
-from collections import defaultdict
-
 from pyparsing import (
     CaselessLiteral,
     OneOrMore,
     Word,
     alphas,
     alphanums,
-    ParseException
+    ParseException,
+    Literal
 )
 
+from .utils import logger
 
-say_kw = CaselessLiteral('diga')
-ask_kw = CaselessLiteral('pergunte')
 
-say = say_kw + OneOrMore(
-    Word(alphas, alphanums + ',!?.:')).setResultsName('msg')
+msg = OneOrMore(Word(alphas + alphanums + '{},!?.:')).setResultsName('msg')
+
+
+class LineParser:
+
+    label = None
+    pattern = None
+
+    def __call__(self, line):
+        r = self.parse(line)
+        logger.debug('line {} parsed with {}'.format(
+            line, type(self).__name__))
+
+        return r
+
+    def parse(self, line):
+        raise NotImplementedError
+
+
+class SayParser(LineParser):
+
+    label = 'say'
+    pattern = CaselessLiteral('diga') + msg
+
+    def parse(self, line):
+        info = self.pattern.parseString(line)
+        return (self.label, ' '.join(info.msg))
+
+
+class AskParser(LineParser):
+
+    label = 'ask'
+    pattern = Word(alphas).setResultsName('var') + Literal('=') + \
+        CaselessLiteral('pergunte') + msg
+
+    def parse(self, line):
+        info = self.pattern.parseString(line)
+        return (self.label, ' '.join(info.msg), info.var)
+
+
+parsers = [
+    SayParser(),
+    AskParser()
+]
 
 
 def parse_slang(slang):
-    dialog = defaultdict(list)
+    dialog = []
     for l in slang.splitlines():
-        try:
-            info = say.parseString(l)
-        except ParseException:
+        if l.startswith('#'):
             continue
-
-        dialog['sayings'].append(' '.join(info.msg))
+        line_parsed = False
+        for parser in parsers:
+            try:
+                dialog.append(parser(l))
+            except ParseException:
+                continue
+            else:
+                line_parsed = True
+                break
+        if not line_parsed:
+            logger.warning('Line {} could not be parsed'.format(l))
 
     return dialog
