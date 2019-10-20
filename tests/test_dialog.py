@@ -13,7 +13,7 @@ def test_from_parsed():
 
     ]
     d = dialog.Dialog.from_parsed(parsed)
-    assert len(d.actions) == 3
+    assert len(d.statements) == 3
 
 
 def test_execute(mocker):

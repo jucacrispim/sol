@@ -2,18 +2,13 @@
 
 import random
 
-from .actions import Say, Ask
-
-actions = {
-    'say': Say,
-    'ask': Ask
-}
+from .statements import get_statement, Say
 
 
 class Dialog:
 
-    def __init__(self, actions):
-        self.actions = actions
+    def __init__(self, statements):
+        self.statements = statements
 
     def __call__(self, context):
         return self.execute(context)
@@ -21,17 +16,15 @@ class Dialog:
     @classmethod
     def from_parsed(cls, parsed):
         dialog_actions = []
-        for action_conf in parsed:
-            label = action_conf[0]
-            rest = action_conf[1:]
-            action_cls = actions[label]
-            dialog_actions.append(action_cls(*rest))
+        for statement_decl in parsed:
+            stmt = get_statement(statement_decl)
+            dialog_actions.append(stmt)
 
         return cls(dialog_actions)
 
     def execute(self, context):
-        for action in self.actions:
-            context = action(context)
+        for stmt in self.statements:
+            context = stmt(context)
         return context
 
 
@@ -47,7 +40,7 @@ class Bollocks(Dialog):
         super().__init__([])
 
     def execute(self, context):
-        self.actions = [Say(random.choice(self.sentences))]
+        self.statements = [Say(random.choice(self.sentences))]
         try:
             super().execute(context)
         finally:
