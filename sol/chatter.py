@@ -3,8 +3,9 @@
 import os
 
 from .dialog import Dialog, Bollocks
-from .parser import parse_slang
+from .parser import SlangParser
 
+SLANG_PARSER = SlangParser()
 
 HERE = os.path.dirname(__file__)
 DIALOGS_DIR = os.path.join(HERE, 'dialogs')
@@ -23,7 +24,7 @@ def _get_slangs():
 
 def _get_dialogs():
     for fname, slang in _get_slangs():
-        d = Dialog.from_parsed(parse_slang(slang))
+        d = Dialog.from_parsed(SLANG_PARSER(slang))
         yield fname, d
 
 
