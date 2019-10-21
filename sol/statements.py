@@ -59,11 +59,27 @@ class If(Statement):
         return 'if {}:'.format(self.cond)
 
 
+class Call(Statement):
+
+    def __init__(self, expr, variable=None):
+        self.expr = expr
+        self.variable = variable
+
+    def __call__(self, context):
+        r = eval_expr(self.expr, context)
+        context[self.variable] = r
+        return context
+
+    def __str__(self):  # pragma no cover
+        return 'call {}:'.format(self.cond)
+
+
 def get_statement(parsed):
     stmts = {
         'say': Say,
         'ask': Ask,
-        'if': If
+        'if': If,
+        'call': Call
     }
     stmt = parsed[0]
     rest = parsed[1:]

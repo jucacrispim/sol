@@ -60,7 +60,17 @@ def test_parse_if_no_else(slang):
     assert parsed[1][0] == 'if'
     assert len(parsed[1][2]) == 2
     assert len(parsed[1][3]) == 0
-    assert len(parsed) == 2
+    assert len(parsed) == 5
+
+
+def test_parse_call(slang):
+    fname = os.path.join(DIALOGS_DIR, 'call.slang')
+    with open(fname) as fd:
+        fcontents = fd.read()
+    parsed = slang(fcontents)
+    assert parsed[0][0] == 'call'
+    assert parsed[0][1] == 'a_fn(1)'
+    assert parsed[0][2] == 'a'
 
 
 def test_parse_nested_identation_error(slang):

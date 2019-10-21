@@ -67,3 +67,15 @@ def test_if_false(mocker):
     stmt(context)
 
     assert not statements.input.called
+
+
+def test_call():
+
+    expr = 'len("asdf")'
+    var = 'a'
+
+    stmt = statements.Call(expr, var)
+
+    context = stmt({})
+
+    assert context['a'] == 4

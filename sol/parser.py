@@ -10,7 +10,8 @@ from pyparsing import (
     alphanums,
     printables,
     ParseException,
-    Literal
+    Literal,
+    Regex
 )
 
 from .utils import logger
@@ -67,11 +68,19 @@ class IfParser(MatchParser):
         return (self.label, ' '.join(toks.rest), [], [])
 
 
+class CallParser(MatchParser):
+
+    label = 'call'
+
+    def parse(self, s, loc, toks):
+        return (self.label, toks.expr, toks.var)
+
+
 class SlangParser:
     """The sol language! :)"""
 
     # First the language rules.
-    # A pattern that matches everything
+
     SAY_KW = [
         'say',
         'diga'
@@ -93,29 +102,49 @@ class SlangParser:
         'senão'
     ]
 
+    # A pattern that matches everything
     REST = OneOrMore(
         Word(printables)
     ).setResultsName('rest')
+
+    # matches variable assignments like `var =`
+    VAR = Word(alphanums + '_').setResultsName('var') + Literal('=')
 
     # SAY Hello, user!
     SAY = oneOf(' '.join(SAY_KW), caseless=True) + REST
     SAY.setParseAction(SayParser())
 
     # answer = ASK What is your name?
-    ASK = Word(alphanums + '_').setResultsName('var') + Literal('=') + \
-        oneOf(' '.join(ASK_KW), caseless=True) + REST
+    # or ASK What is your name?
+    ASK = oneOf(' '.join(ASK_KW), caseless=True) + REST
+    ASK = (VAR + ASK) | ASK
     ASK.setParseAction(AskParser())
 
     # IF {bla} == "oi"
     IF = oneOf(' '.join(IF_KW), caseless=True) + REST
     IF.setParseAction(IfParser())
 
-    GRAMMAR = SAY | ASK | IF
+    # r = fn() or fn()
+    CALL = Regex(r'[\w|_]+\(.*?\)').setResultsName('expr')
+    CALL = (VAR + CALL) | CALL
+    CALL.setParseAction(CallParser())
+
+    GRAMMAR = SAY | ASK | IF | CALL
 
     def __call__(self, text):
         return self.parse(text)
 
     def parse(self, text):
+        """Parses the contents of a .slang file and returns a list of
+        statement rules in the following format:
+
+        [
+            ('say', 'something'),
+            ('say', 'What?', 'varname'),
+            ('if', 'cond', TRUE_RULES, FALSE_RULES),
+            ('call', 'expr', 'varname')
+        ]
+        """
         return self._parse_lines(text.splitlines())
 
     def _parse_lines(self, lines):
@@ -150,14 +179,18 @@ class SlangParser:
 
     def _get_if_actions(self, lines):
         cond_true, i = self._get_nested_lines(lines)
-        line = lines[i].lower()
-        if self._is_else(line):
-            cond_false, j = self._get_nested_lines(lines[i + 1:])
-            i += j
-        else:
+        try:
+            line = lines[i].lower()
+        except IndexError:
             cond_false = []
+        else:
+            if self._is_else(line):
+                cond_false, j = self._get_nested_lines(lines[i + 1:])
+                i += j + 1
+            else:
+                cond_false = []
 
-        return cond_true, cond_false, i + 2
+        return cond_true, cond_false, i
 
     def _is_else(self, line):
         for kw in self.IF_CONT_KW:
@@ -175,11 +208,13 @@ class SlangParser:
 
         leading_spaces = len(line) - len(line.lstrip())
         nested.append(line[leading_spaces:])
-        for i in range(1, len(lines)):
+        i += 1
+        while i < len(lines):
             line = lines[i]
             if line and not line.startswith(' '):
                 break
 
             nested.append(line[leading_spaces:])
+            i += 1
 
         return nested, i
