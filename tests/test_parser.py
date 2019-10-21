@@ -73,6 +73,16 @@ def test_parse_call(slang):
     assert parsed[0][2] == 'a'
 
 
+def test_parse_exists(slang):
+    fname = os.path.join(DIALOGS_DIR, 'exists.slang')
+    with open(fname) as fd:
+        fcontents = fd.read()
+    parsed = slang(fcontents)
+    assert parsed[0][0] == 'exists'
+    assert parsed[0][1] == '{var}'
+    assert parsed[0][2] == 'e'
+
+
 def test_parse_nested_identation_error(slang):
     fname = os.path.join(DIALOGS_DIR, 'cond_indentation_error.slang')
     with open(fname) as fd:

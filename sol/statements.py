@@ -71,7 +71,27 @@ class Call(Statement):
         return context
 
     def __str__(self):  # pragma no cover
-        return 'call {}:'.format(self.cond)
+        return 'call {}:'.format(self.expr)
+
+
+class Exists(Statement):
+
+    def __init__(self, expr, variable=None):
+        self.expr = expr
+        self.variable = variable
+
+    def __call__(self, context):
+        try:
+            eval_expr(self.expr, context)
+            r = True
+        except NameError:
+            r = False
+
+        context[self.variable] = r
+        return context
+
+    def __str__(self):  # pragma no cover
+        return 'exitsts {}:'.format(self.expr)
 
 
 def get_statement(parsed):
@@ -79,7 +99,8 @@ def get_statement(parsed):
         'say': Say,
         'ask': Ask,
         'if': If,
-        'call': Call
+        'call': Call,
+        'exists': Exists
     }
     stmt = parsed[0]
     rest = parsed[1:]

@@ -35,8 +35,9 @@ class Chatter:
     def __init__(self):
         self.default = self.DEFAULT_DIALOG_CLS()
         self.dialogs = {fname: dialog for fname, dialog in _get_dialogs()}
+        self.context = {}
 
     def respond_to(self, text):
         dialog = self.dialogs.get(text, self.default)
-        dialog({})
+        self.context = dialog(self.context)
         return True

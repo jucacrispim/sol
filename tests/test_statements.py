@@ -79,3 +79,23 @@ def test_call():
     context = stmt({})
 
     assert context['a'] == 4
+
+
+def test_exists_true():
+    var = '{a}'
+    stmt = statements.Exists(var, 'e')
+    context = {'a': 1}
+
+    context = stmt(context)
+
+    assert context['e'] is True
+
+
+def test_exists_false():
+    var = '{a}'
+    stmt = statements.Exists(var, 'e')
+    context = {}
+
+    context = stmt(context)
+
+    assert context['e'] is False

@@ -76,6 +76,14 @@ class CallParser(MatchParser):
         return (self.label, toks.expr, toks.var)
 
 
+class ExistsParser(MatchParser):
+
+    label = 'exists'
+
+    def parse(self, s, loc, toks):
+        return (self.label, ' '.join(toks.rest), toks.var)
+
+
 class SlangParser:
     """The sol language! :)"""
 
@@ -102,6 +110,11 @@ class SlangParser:
         'senão'
     ]
 
+    EXISTS_KW = [
+        'exists',
+        'existe'
+    ]
+
     # A pattern that matches everything
     REST = OneOrMore(
         Word(printables)
@@ -120,6 +133,11 @@ class SlangParser:
     ASK = (VAR + ASK) | ASK
     ASK.setParseAction(AskParser())
 
+    # EXISTS {a_var}
+    EXISTS = oneOf(' '.join(EXISTS_KW), caseless=True) + REST
+    EXISTS = (VAR + EXISTS | EXISTS)
+    EXISTS.setParseAction(ExistsParser())
+
     # IF {bla} == "oi"
     IF = oneOf(' '.join(IF_KW), caseless=True) + REST
     IF.setParseAction(IfParser())
@@ -129,7 +147,7 @@ class SlangParser:
     CALL = (VAR + CALL) | CALL
     CALL.setParseAction(CallParser())
 
-    GRAMMAR = SAY | ASK | IF | CALL
+    GRAMMAR = SAY | ASK | IF | CALL | EXISTS
 
     def __call__(self, text):
         return self.parse(text)

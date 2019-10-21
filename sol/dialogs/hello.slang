@@ -1,7 +1,10 @@
 # Um comentário aqui!
 DIGA Que alegria, menino!
-nome = PERGUNTE Qual o seu nome?
-DIGA Prazer, {nome}!
+
+nome_existe = EXISTE {nome}
+SE not {nome_existe}
+  nome = PERGUNTE Qual o seu nome?
+  DIGA Prazer, {nome}!
 
 como_vai = PERGUNTE Como vai seu dia?
 SE {como_vai}  == 'bem'
@@ -9,3 +12,8 @@ SE {como_vai}  == 'bem'
 
 SENÃO
   DIGA Poxa, que chato. :(
+
+
+a = len('asdf')
+
+DIGA {a}
